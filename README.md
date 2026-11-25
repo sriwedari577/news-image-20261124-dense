@@ -1,31 +1,28 @@
-[![News image 24 November 2026](https://make.fun/badge/news-image-20261124.svg)](https://make.fun/bounty/news-image-20261124)
-[![Rank](https://make.fun/badge/news-image-20261124/sriwedari577/news-image-20261124-dense/rank.svg)](https://github.com/sriwedari577/news-image-20261124-dense)
-[![Reward](https://make.fun/badge/news-image-20261124/sriwedari577/news-image-20261124-dense/reward.svg)](https://github.com/sriwedari577/news-image-20261124-dense)
+[![Make.fun](https://make.fun/badge/news-image-20261124.svg)](https://make.fun/c/news-image-20261124?utm_source=github&utm_medium=badge&utm_campaign=sriwedari577)
+[![Rank](https://make.fun/badge/news-image-20261124/sriwedari577/news-image-20261124-dense/rank.svg)](https://make.fun/c/news-image-20261124?utm_source=github&utm_medium=badge&utm_campaign=sriwedari577)
+[![Reward](https://make.fun/badge/news-image-20261124/sriwedari577/news-image-20261124-dense/reward.svg)](https://make.fun/c/news-image-20261124?utm_source=github&utm_medium=badge&utm_campaign=sriwedari577)
 
-# Tuesday 24 November 2026 — One Day in the News
+# Tuesday, 24 November 2026 — One Day in the News, Fifth Dense Revision
 
-A single 1024x1024 image summing up Tuesday 24 November 2026: 44 stories
-across 10 regions, every one dated to that day. Three large illustrated
-stories, ten illustrated secondary cards, a numbered world map, a numbers
-strip, a UTC timeline, a date-check box listing near-date stories that were
-deliberately left out, and 31 further one-line stories. Every story carries a
-status label (CONFIRMED / OFFICIAL / REPORTED / CLAIM) and a named source.
-All maps and drawings are original; no photographs are used.
+A 1024×1024 broadsheet of 39 stories, every one first reported on Tuesday
+24 November 2026, across 10 regions: 3 large illustrated cards, 10 smaller
+illustrated cards, and a numbered ALSO ON list. Every story carries a status
+label (CONFIRMED / OFFICIAL / REPORTED / CLAIM) and a named source. A DATE
+CHECK box lists near-date stories that were deliberately left out, with their
+real dates. A numbered-pin dot-grid map, a UTC timeline of verified hours,
+and a six-figure numbers strip complete the page.
 
-## How it runs
+The page is drawn by a single original program, `main.ts` (Node standard
+library only). It includes a hand-rolled PNG encoder and a vector stroke font
+designed for this page — each glyph is a polyline, mixed case, proportional
+widths, display weight — built because bitmap type collapses at thumbnail
+size. All scenes and the map are original drawings.
 
-`main.ts` (Node 22, standard library only) draws the whole image itself with
-a hand-rolled PNG encoder and a 5x7 bitmap font, then writes it to
-`$MAKEFUN_OUTPUT_DIR/entry.png` (or `/output/entry.png`). Running it twice
-produces byte-identical output.
+## Run
 
 ```sh
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
+node main.ts
 ```
 
-## Entry
-
-- Competition: Sum up 24 November's world news in one image
-  (`news-image-20261124`) on make.fun.
-- Program: `main.ts` at the repository root.
-- License: MIT (see LICENSE).
+This writes `entry.png` (1024×1024) to `$MAKEFUN_OUTPUT_DIR` (or `./out`).
+Running it twice produces a byte-identical file.
