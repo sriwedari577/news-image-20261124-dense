@@ -1,8 +1,9 @@
-// News image for Tuesday 24 November 2026 — refresh revision 2.
-// Dense broadsheet: 29 verified stories across 7 regions.
+// News image for Tuesday 24 November 2026 — refresh revision 3.
+// Dense broadsheet: 40 verified stories across 8 regions.
 // Draws a 1024x1024 newspaper-style broadsheet with a hand-written
 // 5x7 bitmap font and a from-scratch PNG encoder. Node standard
-// library only, no network, deterministic output.
+// library only, no network, deterministic output. Hero cards carry
+// simple drawn scenes (vector shapes) for the top stories.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -23,6 +24,8 @@ const AMBER: RGB = [176, 83, 9];
 const WHITE: RGB = [255, 255, 255];
 const RULE: RGB = [196, 188, 168];
 const MOON: RGB = [250, 222, 130];
+const NAVY: RGB = [28, 38, 66];
+const SKY: RGB = [196, 216, 232];
 
 // ---------------------------------------------------------------- font
 // 5x7 bitmap glyphs, 7 rows of 5 bits each. Text is rendered uppercase.
@@ -134,6 +137,25 @@ class Canvas {
     }
   }
 
+  // Bresenham line with square brush of side `thick`.
+  line(x0: number, y0: number, x1: number, y1: number, c: RGB, thick: number): void {
+    const dx = Math.abs(x1 - x0);
+    const dy = -Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy;
+    let x = x0;
+    let y = y0;
+    const half = Math.floor(thick / 2);
+    for (;;) {
+      this.fillRect(x - half, y - half, thick, thick, c);
+      if (x === x1 && y === y1) break;
+      const e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x += sx; }
+      if (e2 <= dx) { err += dx; y += sy; }
+    }
+  }
+
   textWidth(text: string, scale: number): number {
     const s = text.toUpperCase();
     if (s.length === 0) return 0;
@@ -233,70 +255,135 @@ function encodePng(cv: Canvas): Buffer {
 
 // ---------------------------------------------------------------- content
 
-type Story = { region: string; status: 'CONFIRMED' | 'REPORTED'; headline: string; body: string };
+type Story = { region: string; status: 'CONFIRMED' | 'REPORTED'; scene: string; headline: string; body: string };
 
 const HEROES: Story[] = [
   {
     region: 'SCIENCE',
     status: 'CONFIRMED',
+    scene: 'moon',
     headline: 'BEAVER SUPERMOON',
-    body: 'FULL PHASE 14:53 UTC. FIRST OF FOUR SUPERMOONS, CLOSEST FULL MOON OF THE YEAR.',
-  },
-  {
-    region: 'ASIA-PACIFIC',
-    status: 'REPORTED',
-    headline: 'DEATH SENTENCE FOR SPYING',
-    body: 'CHINESE OFFICIAL MA SENTENCED TO DEATH FOR LEAKING 35 STATE SECRETS TO A FOREIGN COUNTRY.',
+    body: 'FULL PHASE 14:53 UTC. FIRST SUPERMOON OF FOUR.',
   },
   {
     region: 'ASIA-PACIFIC',
     status: 'CONFIRMED',
-    headline: 'RUSSIAN JETS IN KOREA AIR ZONE',
-    body: 'SEOUL SCRAMBLED FIGHTERS AS RUSSIAN PLANES ENTERED ITS AIR DEFENCE ZONE, THEN WITHDREW.',
+    scene: 'skyline',
+    headline: 'CHEN JINING PROBED',
+    body: 'POLITBURO MEMBER. FOURTH TO FALL SINCE 2025.',
+  },
+  {
+    region: 'ASIA-PACIFIC',
+    status: 'CONFIRMED',
+    scene: 'chart',
+    headline: 'TAIEX RECORD +8.99%',
+    body: 'BIGGEST ONE-DAY POINTS GAIN EVER: +3,310.',
   },
 ];
 
 const SECONDARY: Story[] = [
-  { region: 'NORTH AMERICA', status: 'CONFIRMED', headline: 'PENTAGON REBUKES CANADA: ONLY 41.9% OF ITS AIR FLEET SERVICEABLE', body: '' },
-  { region: 'NORTH AMERICA', status: 'CONFIRMED', headline: 'US BLACKLISTS MEGASPEED IN NVIDIA CHIP-SMUGGLING SCANDAL', body: '' },
-  { region: 'EUROPE', status: 'REPORTED', headline: "ZELENSKY URGES FOUR-PARTY TALKS 'AS SOON AS POSSIBLE'", body: '' },
-  { region: 'MIDDLE EAST', status: 'REPORTED', headline: 'ABU DHABI TALKS END WITHOUT BREAKTHROUGH; POW SWAP AGREED', body: '' },
-  { region: 'ASIA-PACIFIC', status: 'REPORTED', headline: 'ASIAN CHIP STOCKS RALLY AS NVIDIA FEARS EASE', body: '' },
-  { region: 'NORTH AMERICA', status: 'REPORTED', headline: 'US LAWMAKERS PREPARE EXPANDED NVIDIA INVESTIGATIONS', body: '' },
-  { region: 'EUROPE', status: 'CONFIRMED', headline: 'UKRAINE, GERMANY AGREE EXTRA INTERCEPTOR MISSILES', body: '' },
-  { region: 'EUROPE', status: 'CONFIRMED', headline: 'RUSSIAN STRIKES ON ZAPORIZHZHIA KILL 2, INJURE DOZENS', body: '' },
-  { region: 'EUROPE', status: 'CONFIRMED', headline: 'UKRAINE WARNS UN: PORT ATTACKS THREATEN FOOD SECURITY', body: '' },
-  { region: 'EUROPE', status: 'REPORTED', headline: 'GREECE PILOTS UKRAINE FREIGHT ROUTE VIA ALEXANDROUPOLIS', body: '' },
+  { region: 'AFRICA', status: 'CONFIRMED', scene: '', headline: 'CAS RESTORES SENEGAL AS AFCON CHAMPIONS, 1-0; MOROCCO TO CHALLENGE', body: '' },
+  { region: 'ASIA-PACIFIC', status: 'REPORTED', scene: '', headline: 'DEATH SENTENCE FOR SPYING: OFFICIAL MA LEAKED 35 STATE SECRETS', body: '' },
+  { region: 'ASIA-PACIFIC', status: 'CONFIRMED', scene: '', headline: 'RUSSIAN JETS IN KOREA AIR ZONE; SEOUL SCRAMBLED FIGHTERS', body: '' },
+  { region: 'ASIA-PACIFIC', status: 'CONFIRMED', scene: '', headline: 'KOSPI RECLAIMS 5,000, UP 6.32% AS CHIP STOCKS RALLY IN SEOUL', body: '' },
+  { region: 'EUROPE', status: 'CONFIRMED', scene: '', headline: 'SANOFI TO BUY INSMED FOR $41BN, ITS BIGGEST DEAL IN 20 YEARS', body: '' },
+  { region: 'EUROPE', status: 'CONFIRMED', scene: '', headline: 'UK HEAT DEATHS HIT RECORD 5,258 IN SUMMER 2026, UKHSA SAYS', body: '' },
+  { region: 'MIDDLE EAST', status: 'REPORTED', scene: '', headline: 'IRGC SAYS 3 TANKERS HIT MINES IN HORMUZ; CENTCOM REJECTS CLAIM', body: '' },
+  { region: 'NORTH AMERICA', status: 'CONFIRMED', scene: '', headline: 'HUAWEI GUILTY ON 10 OF 12 COUNTS IN US TRIAL; RACKETEERING ACQUITTED', body: '' },
+  { region: 'NORTH AMERICA', status: 'CONFIRMED', scene: '', headline: 'DELL REVENUE DOUBLES TO $54.9BN ON AI SERVERS; FORECAST RAISED', body: '' },
+  { region: 'EUROPE', status: 'CONFIRMED', scene: '', headline: 'EU PARLIAMENT BACKS ETS BOOST 403-78 IN STRASBOURG VOTES', body: '' },
+  { region: 'GLOBAL', status: 'CONFIRMED', scene: '', headline: 'UN: 47,000 WOMEN KILLED BY PARTNERS OR FAMILY IN 2025, 5 AN HOUR', body: '' },
+  { region: 'MIDDLE EAST', status: 'CONFIRMED', scene: '', headline: 'HOUTHI DRONE HITS RIYADH TOWER; 11 HURT, SAUDI CIVIL DEFENCE SAYS', body: '' },
+  { region: 'AFRICA', status: 'CONFIRMED', scene: '', headline: 'EBOLA WORKERS EVACUATED IN CONGO AFTER 3 DAYS SHELTERING IN HOSPITAL', body: '' },
+  { region: 'EUROPE', status: 'CONFIRMED', scene: '', headline: 'SARKOZY AND BRUNI ORDERED TO TRIAL OVER WITNESS-TAMPERING CLAIMS', body: '' },
 ];
 
 const ALSO_ON: string[] = [
-  'CAS: SENEGAL BACK AS AFCON CHAMPIONS',
-  'CHESS OPENS: GUKESH VS SINDAROV',
-  'EP BACKS ETS BOOST; OMNIBUS IV VOTED',
+  'PENTAGON: CANADA FLEET 41.9% READY',
+  'US BLACKLISTS MEGASPEED OVER CHIPS',
+  'ZELENSKY URGES FOUR-PARTY TALKS',
+  'ABU DHABI TALKS END; POW SWAP AGREED',
+  'US LAWMAKERS PLAN NVIDIA PROBES',
+  'UKRAINE, GERMANY AGREE MISSILES',
+  'ZAPORIZHZHIA STRIKES KILL 2, HURT 40',
+  'UKRAINE WARNS UN ON FOOD SECURITY',
+  'GREECE PILOTS UKRAINE FREIGHT ROUTE',
   'NATO SPACE VOW; KREMLIN DENIES',
-  'RUSSIAN DRONE ENTERED POLISH AIRSPACE',
+  'POLAND DRONE INCURSION REPORTED',
   'WONG DEFENDS AUSTRALIA-VANUATU PACT',
   'SHENZHOU-24: FIRST FOREIGN ASTRONAUT',
   'HASINA PLANS RETURN TO BANGLADESH',
   'INDIA INVOKES BENGAL FAMINE AT UN',
   'TURKEYS FREEDOM, FEATHERS PARDONED',
-  'GIULIANI TO GET MEDAL OF FREEDOM',
+  'GIULIANI GETS MEDAL OF FREEDOM',
   'ANMER HALL BREAK-IN REPORTED, 2 HELD',
   'HANOI GAS BLAST KILLS 6 AT EATERY',
-  'ISRAEL KILLS HAMAS SECURITY CHIEF',
-  'IOWA: ARMY CONFIRMS WEDNESDAY BLAST',
-  'KOREA TIGHTENS AI-CHEAT RULES',
+  'GAZA STRIKES KILL HAMAS SECURITY CHIEF',
+  'CIA, ODNI BREACH: UNCLASSIFIED DATA',
+  'UNAIDS: HIV DEATHS AT 20-YEAR LOW',
+  'CHESS GAME 1: GUKESH, SINDAROV DRAW',
 ];
 
 const TIMELINE: Array<[string, string]> = [
   ['00:30', 'CALL'],
   ['01:00', 'HANOI'],
-  ['01:04', 'KADIZ'],
-  ['05:35', 'STRIKES'],
+  ['09:53', 'HEAT'],
   ['14:00', 'CHESS'],
   ['14:53', 'MOON'],
-  ['19:00', 'TURKEYS'],
 ];
+
+// ---------------------------------------------------------------- scenes
+
+function drawScene(cv: Canvas, x: number, y: number, w: number, h: number, kind: string): void {
+  if (kind === 'moon') {
+    cv.fillRect(x, y, w, h, NAVY);
+    cv.fillRect(x + 14, y + 8, 3, 3, WHITE);
+    cv.fillRect(x + 52, y + 5, 2, 2, WHITE);
+    cv.fillRect(x + 96, y + 10, 3, 3, WHITE);
+    cv.fillRect(x + 150, y + 6, 2, 2, WHITE);
+    cv.fillRect(x + 210, y + 9, 3, 3, WHITE);
+    cv.fillRect(x + 262, y + 6, 2, 2, WHITE);
+    cv.circle(x + 218, y + 21, 14, MOON);
+    cv.ring(x + 218, y + 21, 14, WHITE, 1);
+    cv.fillRect(x, y + h - 12, w, 12, INK);
+    cv.fillRect(x + 10, y + h - 26, 34, 26, GRAY);
+    cv.fillRect(x + 52, y + h - 34, 26, 34, [70, 70, 70]);
+    cv.fillRect(x + 86, y + h - 22, 30, 22, GRAY);
+    cv.fillRect(x + 124, y + h - 30, 24, 30, [70, 70, 70]);
+  } else if (kind === 'skyline') {
+    cv.fillRect(x, y, w, h, SKY);
+    cv.fillRect(x + 12, y + 10, 40, h - 10, INK);
+    cv.fillRect(x + 60, y + 4, 30, h - 4, RED);
+    cv.fillRect(x + 98, y + 14, 44, h - 14, GRAY);
+    cv.fillRect(x + 150, y + 8, 34, h - 8, INK);
+    cv.fillRect(x + 192, y + 16, 40, h - 16, GRAY);
+    cv.fillRect(x + 240, y + 6, 32, h - 6, RED);
+    cv.fillRect(x + 278, y + 18, 30, h - 18, INK);
+    for (let i = 0; i < 5; i++) {
+      cv.fillRect(x + 18, y + 16 + i * 6, 6, 3, MOON);
+      cv.fillRect(x + 106, y + 20 + i * 5, 6, 3, WHITE);
+      cv.fillRect(x + 198, y + 22 + i * 5, 6, 3, MOON);
+    }
+    cv.fillRect(x + 66, y + 10, 18, 3, WHITE);
+  } else if (kind === 'chart') {
+    cv.fillRect(x, y, w, h, WHITE);
+    cv.strokeRect(x, y, w, h, INK, 1);
+    cv.fillRect(x + 14, y + 8, 30, 26, GREEN);
+    cv.fillRect(x + 54, y + 14, 30, 20, GREEN);
+    cv.fillRect(x + 94, y + 6, 30, 28, GREEN);
+    cv.fillRect(x + 134, y + 12, 30, 22, GREEN);
+    cv.fillRect(x + 174, y + 4, 30, 30, GREEN);
+    cv.fillRect(x + 214, y + 10, 30, 24, GREEN);
+    cv.fillRect(x + 254, y + 2, 30, 32, GREEN);
+    cv.line(x + 8, y + h - 8, x + 24, y + h - 20, RED, 3);
+    cv.line(x + 24, y + h - 20, x + 70, y + h - 24, RED, 3);
+    cv.line(x + 70, y + h - 24, x + 130, y + h - 14, RED, 3);
+    cv.line(x + 130, y + h - 14, x + 200, y + h - 18, RED, 3);
+    cv.line(x + 200, y + h - 18, x + 292, y + h - 34, RED, 3);
+    cv.fillRect(x + 284, y + h - 38, 10, 4, RED);
+    cv.fillRect(x + 288, y + h - 42, 4, 10, RED);
+  }
+}
 
 // ---------------------------------------------------------------- layout
 
@@ -306,32 +393,32 @@ function statusColor(status: string): RGB {
 
 function draw(cv: Canvas): void {
   // Masthead.
-  cv.fillRect(0, 0, W, 106, INK);
-  cv.drawCentered('24 NOVEMBER 2026', 14, 6, WHITE);
-  cv.fillRect(180, 66, W - 360, 2, RED);
-  cv.drawCentered('TUESDAY - ONE DAY IN THE NEWS - 29 STORIES - 7 REGIONS', 76, 2, [232, 226, 212]);
+  cv.fillRect(0, 0, W, 100, INK);
+  cv.drawCentered('24 NOVEMBER 2026', 12, 6, WHITE);
+  cv.fillRect(180, 60, W - 360, 2, RED);
+  cv.drawCentered('TUESDAY - ONE DAY IN THE NEWS - 40 STORIES - 8 REGIONS', 70, 2, [232, 226, 212]);
 
   // Date check box.
-  cv.strokeRect(16, 116, W - 32, 38, RED, 3);
-  cv.drawCentered('DATE CHECK - EVERY STORY HAPPENED OR WAS FIRST REPORTED', 123, 2, RED);
-  cv.drawCentered('ON 24 NOVEMBER 2026. BORDERLINE ITEMS ARE WORDED AS REPORTED.', 139, 2, INK);
+  cv.strokeRect(16, 104, W - 32, 44, RED, 3);
+  cv.drawCentered('DATE CHECK - EVERY STORY HAPPENED OR WAS FIRST REPORTED', 110, 2, RED);
+  cv.drawCentered('ON 24 NOVEMBER 2026. BORDERLINE ITEMS ARE WORDED AS REPORTED.', 128, 2, INK);
 
   // UTC timeline strip.
-  cv.drawText('24 NOV, UTC', 16, 168, 2, GRAY);
+  cv.drawText('24 NOV, UTC', 16, 154, 2, GRAY);
   const tx0 = 190;
   const tx1 = 960;
-  const ty = 186;
+  const ty = 172;
   cv.fillRect(tx0, ty, tx1 - tx0, 2, INK);
   TIMELINE.forEach(([time, label], i) => {
     const x = tx0 + Math.round((i * (tx1 - tx0)) / (TIMELINE.length - 1));
     cv.fillRect(x - 1, ty - 6, 3, 14, RED);
-    cv.drawText(time, x - Math.round(cv.textWidth(time, 2) / 2), 164, 2, INK);
-    cv.drawText(label, x - Math.round(cv.textWidth(label, 2) / 2), 194, 2, GRAY);
+    cv.drawText(time, x - Math.round(cv.textWidth(time, 2) / 2), 154, 2, INK);
+    cv.drawText(label, x - Math.round(cv.textWidth(label, 2) / 2), 180, 2, GRAY);
   });
 
-  // Hero cards: 3 across.
-  const heroY = 222;
-  const heroH = 186;
+  // Hero cards: 3 across, each with a drawn scene.
+  const heroY = 198;
+  const heroH = 150;
   const heroXs = [16, 350, 685];
   const heroWs = [322, 323, 323];
   HEROES.forEach((story, i) => {
@@ -339,57 +426,49 @@ function draw(cv: Canvas): void {
     const w = heroWs[i];
     cv.fillRect(x, heroY, w, heroH, WHITE);
     cv.strokeRect(x, heroY, w, heroH, INK, 2);
-    cv.fillRect(x, heroY, w, 6, INK);
-    cv.drawText(`${story.region} - ${story.status}`, x + 12, heroY + 16, 2, statusColor(story.status));
-    if (i === 0) {
-      cv.circle(x + w - 30, heroY + 24, 15, MOON);
-      cv.ring(x + w - 30, heroY + 24, 15, GRAY, 2);
-    }
-    cv.drawWrapped(story.headline, x + 12, heroY + 42, w - 24, 3, INK, 24, 3);
-    cv.drawWrapped(story.body, x + 12, heroY + 118, i === 0 ? w - 24 : w - 24, 2, BODY, 16, 4);
+    drawScene(cv, x + 6, heroY + 6, w - 12, 40, story.scene);
+    cv.drawText(`${story.region} - ${story.status}`, x + 12, heroY + 54, 2, statusColor(story.status));
+    cv.drawWrapped(story.headline, x + 12, heroY + 70, w - 24, 3, INK, 23, 2);
+    cv.drawWrapped(story.body, x + 12, heroY + 116, w - 24, 2, BODY, 15, 2);
   });
 
-  // Secondary cards: 2 columns x 5 rows.
-  const secY = 418;
-  const secH = 60;
+  // Secondary cards: 2 columns x 7 rows.
+  const secY = 356;
+  const secH = 50;
   const secXs = [16, 518];
   SECONDARY.forEach((story, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
     const x = secXs[col];
-    const y = secY + row * (secH + 6);
+    const y = secY + row * (secH + 2);
     const w = 490;
     cv.fillRect(x, y, w, secH, WHITE);
     cv.strokeRect(x, y, w, secH, RULE, 1);
     cv.fillRect(x, y, 6, secH, statusColor(story.status));
-    cv.drawText(`${story.region} - ${story.status}`, x + 14, y + 7, 2, statusColor(story.status));
-    cv.drawWrapped(story.headline, x + 14, y + 25, w - 26, 2, INK, 16, 2);
+    cv.drawText(`${story.region} - ${story.status}`, x + 14, y + 4, 2, statusColor(story.status));
+    cv.drawWrapped(story.headline, x + 14, y + 20, w - 26, 2, INK, 15, 2);
   });
 
   // Also-on list.
-  const listY = 748;
+  const listY = 722;
   cv.drawText('ALSO ON 24 NOVEMBER...', 16, listY, 3, INK);
-  cv.fillRect(16, listY + 28, W - 32, 2, INK);
+  cv.fillRect(16, listY + 26, W - 32, 2, INK);
   ALSO_ON.forEach((item, i) => {
-    const col = i < 8 ? 0 : 1;
-    const row = i % 8;
+    const col = i < 12 ? 0 : 1;
+    const row = i % 12;
     const numX = col === 0 ? 16 : 508;
     const textX = col === 0 ? 60 : 552;
-    const y = listY + 36 + row * 19;
-    cv.drawText(`${i + 14}.`, numX, y, 2, RED);
+    const y = listY + 32 + row * 16;
+    cv.drawText(`${i + 18}.`, numX, y, 2, RED);
     cv.drawText(item, textX, y, 2, INK);
-    if (col === 0 && row < 7) cv.fillRect(16, y + 17, W - 32, 1, RULE);
   });
 
-  // Region bar + numbers strip.
-  const barY = 954;
-  cv.drawCentered('EUROPE 10 - ASIA-PAC 8 - N AMERICA 6 - MIDEAST 2 - AFRICA 1 - OCEANIA 1 - SCIENCE 1', barY, 2, INK);
-  cv.drawCentered('29 STORIES - 11 CONFIRMED - 18 REPORTED - 0 CLAIM', barY + 16, 2, GRAY);
-
-  // Footer sources band.
-  cv.fillRect(0, 990, W, 34, INK);
-  cv.drawCentered('SOURCES: AP - REUTERS - PTI - FIDE - CAS - EUROPEAN PARLIAMENT - PENTAGON - US BIS - USA TODAY - FOX - CBS - TIMES', 996, 1, [232, 226, 212]);
-  cv.drawCentered('WIRE DIGESTS - FINANCEFEEDS - IBJ - PINA - DISCOVER - EARTHSKY - EUROPESAYS - SOFX', 1008, 1, [232, 226, 212]);
+  // Region bar (two lines) + footer.
+  cv.drawCentered('EUROPE 13 - ASIA-PAC 8 - N AMERICA 8 - MIDEAST 4', 953, 2, INK);
+  cv.drawCentered('GLOBAL 3 - AFRICA 2 - OCEANIA 1 - SCIENCE 1', 969, 2, INK);
+  cv.fillRect(0, 986, W, 38, INK);
+  cv.drawCentered('SOURCES: AP - REUTERS - GOV.UK/UKHSA - UN - UNAIDS - CAS - FIDE - EUROPEAN PARLIAMENT - SANOFI - DELL - XINHUA - FOCUS TAIWAN', 992, 1, [232, 226, 212]);
+  cv.drawCentered('40 STORIES - 26 CONFIRMED - 14 REPORTED - 0 CLAIM', 1004, 1, [232, 226, 212]);
 }
 
 // ---------------------------------------------------------------- main
